@@ -46,6 +46,7 @@ unset CCACHE_SLOPPINESS
 unset CCACHE_TEMPDIR
 unset CCACHE_UMASK
 unset CCACHE_UNIFY
+unset CCACHE_SESSION_STATS
 unset GCC_COLORS
 
 # Many tests backdate files, which updates their ctimes.  In those tests, we

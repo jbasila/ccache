@@ -81,6 +81,7 @@ TEST(conf_create)
 	CHECK_STR_EQ("", conf->temporary_dir);
 	CHECK_INT_EQ(UINT_MAX, conf->umask);
 	CHECK(!conf->unify);
+	CHECK_STR_EQ("", conf->session_stats);
 	conf_free(conf);
 }
 
@@ -130,7 +131,8 @@ TEST(conf_read_valid_config)
 	  "stats = false\n"
 	  "temporary_dir = ${USER}_foo\n"
 	  "umask = 777\n"
-	  "unify = true"); /* Note: no newline */
+	  "unify = true\n"
+	  "session_stats = /tmp/session.stats"); /* Note: no newline */
 	CHECK(conf_read(conf, "ccache.conf", &errmsg));
 	CHECK(!errmsg);
 
@@ -172,6 +174,7 @@ TEST(conf_read_valid_config)
 	CHECK_STR_EQ_FREE1(format("%s_foo", user), conf->temporary_dir);
 	CHECK_INT_EQ(0777, conf->umask);
 	CHECK(conf->unify);
+	CHECK_STR_EQ("/tmp/session.stats", conf->session_stats);
 
 	conf_free(conf);
 }
