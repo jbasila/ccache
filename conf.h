@@ -34,6 +34,7 @@ struct conf {
 	char *temporary_dir;
 	unsigned umask;
 	bool unify;
+	char *session_stats;
 
 	const char **item_origins;
 };

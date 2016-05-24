@@ -2562,6 +2562,42 @@ b"
 b"
 }
 
+session_stats_suite() {
+    SESSION_STATS=/tmp/session-cache.stats
+    rm -f ${SESSION_STATS}
+    
+    ##################################################################
+    # Create some code to compile.
+    echo "int test;" >test.c
+
+    # Cache a compilation.
+    testname="fill cache"
+    $CCACHE $COMPILER -c test.c -o test.o
+    checkstat 'cache hit (direct)' 0
+    checkstat 'cache hit (preprocessed)' 0
+    checkstat 'cache miss' 1
+
+    testname="preprocessed hit"
+    $CCACHE $COMPILER -c test.c -o test.o
+    checkstat 'cache hit (direct)' 0
+    checkstat 'cache hit (preprocessed)' 1
+    checkstat 'cache miss' 1
+
+    testname="preprocessed hit (session stats)"
+    CCACHE_SESSION_STATS=${SESSION_STATS} $CCACHE $COMPILER -c test.c -o test.o
+    checkstat 'cache hit (direct)' 0
+    checkstat 'cache hit (preprocessed)' 2
+    checkstat 'cache miss' 1
+
+    testname="preprocessed hit (test session stats)"
+    CCACHE_SESSION_STATS=${SESSION_STATS} checkstat 'cache hit (direct)' 0
+    CCACHE_SESSION_STATS=${SESSION_STATS} checkstat 'cache hit (preprocessed)' 1
+    CCACHE_SESSION_STATS=${SESSION_STATS} checkstat 'cache miss' 0
+
+    rm -f ${SESSION_STATS}
+    unset CCACHE_SESSION_STATS
+}
+
 ######################################################################
 # main program
 

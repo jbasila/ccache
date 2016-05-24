@@ -178,6 +178,31 @@ stats_read(const char *sfile, struct counters *counters)
 }
 
 /*
+ * Return false if bailing out of the function to indicate that counters
+ * was not allocated.
+ */
+static bool
+stats_flush_to_file(const char* file_name, struct counters **counters)
+{
+	int i;
+
+	if (!lockfile_acquire(file_name, lock_staleness_limit)) {
+		return false;
+	}
+
+	*counters = counters_init(STATS_END);
+	stats_read(file_name, *counters);
+	for (i = 0; i < STATS_END; ++i) {
+		(*counters)->data[i] += counter_updates->data[i];
+	}
+
+	stats_write(file_name, *counters);
+	lockfile_release(file_name);
+
+	return true;
+}
+
+/*
  * Write counter updates in counter_updates to disk.
  */
 void
@@ -220,16 +245,14 @@ stats_flush(void)
 		free(stats_dir);
 	}
 
-	if (!lockfile_acquire(stats_file, lock_staleness_limit)) {
+	if(conf->session_stats[0]) {
+		if (stats_flush_to_file(conf->session_stats, &counters)) {
+			counters_free(counters);
+			counters = NULL;
+		}
+	}
+	if(!stats_flush_to_file(stats_file, &counters))
 		return;
-	}
-	counters = counters_init(STATS_END);
-	stats_read(stats_file, counters);
-	for (i = 0; i < STATS_END; ++i) {
-		counters->data[i] += counter_updates->data[i];
-	}
-	stats_write(stats_file, counters);
-	lockfile_release(stats_file);
 
 	if (!str_eq(conf->log_file, "")) {
 		for (i = 0; i < STATS_END; ++i) {
@@ -284,18 +307,22 @@ stats_summary(struct conf *conf)
 
 	assert(conf);
 
-	/* add up the stats in each directory */
-	for (dir = -1; dir <= 0xF; dir++) {
-		char *fname;
+	if (conf->session_stats[0]) {
+		stats_read(conf->session_stats, counters);
+	} else {
+		/* add up the stats in each directory */
+		for (dir = -1; dir <= 0xF; dir++) {
+			char *fname;
 
-		if (dir == -1) {
-			fname = format("%s/stats", conf->cache_dir);
-		} else {
-			fname = format("%s/%1x/stats", conf->cache_dir, dir);
+			if (dir == -1) {
+				fname = format("%s/stats", conf->cache_dir);
+			} else {
+				fname = format("%s/%1x/stats", conf->cache_dir, dir);
+			}
+
+			stats_read(fname, counters);
+			free(fname);
 		}
-
-		stats_read(fname, counters);
-		free(fname);
 	}
 
 	printf("cache directory                     %s\n", conf->cache_dir);

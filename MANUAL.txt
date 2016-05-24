@@ -493,6 +493,12 @@ information.
     If true, ccache will update the statistics counters on each compilation.
     The default is true.
 
+*session_stats* (*CCACHE_SESSION_STATS*)::
+
+    To check stats for a specific compilation session, use this variable to set
+    a full path for a custom stats file to get stats for a specific compilation
+    session. This attribute will not affect the global stats. 
+
 *temporary_dir* (*CCACHE_TEMPDIR*)::
 
     This setting specifies where ccache will put temporary files. The default
