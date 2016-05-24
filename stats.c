@@ -309,6 +309,7 @@ stats_summary(struct conf *conf)
 
 	if (conf->session_stats[0]) {
 		stats_read(conf->session_stats, counters);
+		printf("using session stats                 %s\n", conf->session_stats);
 	} else {
 		/* add up the stats in each directory */
 		for (dir = -1; dir <= 0xF; dir++) {
@@ -376,6 +377,10 @@ stats_zero(void)
 	fname = format("%s/stats", conf->cache_dir);
 	x_unlink(fname);
 	free(fname);
+
+	if(conf->session_stats[0]) {
+		x_unlink(conf->session_stats);
+	}
 
 	for (dir = 0; dir <= 0xF; dir++) {
 		struct counters *counters = counters_init(STATS_END);
